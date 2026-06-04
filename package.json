@@ -1,0 +1,19 @@
+{
+  "name": "ampera-kasir",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api":      "npm run dev --workspace=apps/api",
+    "dev:miniapp":  "npm run dev --workspace=apps/miniapp",
+    "dev:bot":      "npm run dev --workspace=apps/bot",
+    "dev":          "concurrently \"npm run dev:api\" \"npm run dev:miniapp\" \"npm run dev:bot\"",
+    "build:miniapp": "npm run build --workspace=apps/miniapp"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

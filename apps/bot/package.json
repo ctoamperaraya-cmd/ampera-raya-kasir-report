@@ -1,0 +1,20 @@
+{
+  "name": "@ampera/bot",
+  "version": "1.0.0",
+  "private": true,
+  "main": "src/index.js",
+  "scripts": {
+    "dev":   "nodemon src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "dayjs": "^1.11.13",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "grammy": "^1.30.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
