@@ -42,8 +42,6 @@ export function calcDerivedValues(form) {
   const float_cash_esok = total_cash_a - n(form.bank_in_cash);
 
   // Grand Total
-  const grand_total = n(form.hubbo_total_income_all) + total_other_income_c;
-
   // Hubbo — System column
   const hubbo_net_cash = n(form.hubbo_net_cash);
   const hubbo_pengeluaran = n(form.hubbo_pengeluaran);
@@ -51,6 +49,7 @@ export function calcDerivedValues(form) {
   const hubbo_qr = n(form.hubbo_qr_transfer);
   const hubbo_dc = n(form.hubbo_debit_credit);
   const hubbo_total_income = hubbo_cash_sales + hubbo_qr + hubbo_dc;
+  const grand_total = hubbo_total_income + total_other_income_c;
   const hubbo_total_all = n(form.hubbo_total_income_all);
 
   // Diff (Actual - Hubbo) — negative means actual lebih rendah
@@ -60,7 +59,7 @@ export function calcDerivedValues(form) {
   const diff_qr = total_transfer_qr_b - hubbo_qr;
   const diff_dc = debit_credit_total_d - hubbo_dc;
   const diff_total_income = total_income_actual - hubbo_total_income;
-  const diff_total_all = total_income_all_actual - hubbo_total_all;
+  const diff_total_all = total_income_actual - hubbo_total_income;
 
   return {
     total_cash_a,

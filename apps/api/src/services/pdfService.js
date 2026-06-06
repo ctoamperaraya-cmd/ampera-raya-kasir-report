@@ -40,9 +40,10 @@ function generateHTML(report) {
   const branchName = BRANCH_NAMES[report.branch_code] || report.branch_code;
   const reportDate = dayjs(report.report_date).format('DD/MM/YYYY');
 
-  const denomRows = Object.entries(dq)
-    .filter(([, qty]) => n(qty) > 0)
-    .map(([key, qty]) => {
+  const DENOM_ORDER = ['rm100','rm50','rm20','rm10','rm5','rm1','rm050','rm020','rm010','rm005'];
+  const denomRows = DENOM_ORDER
+    .filter(key => n(dq[key]) > 0)
+    .map(key => { const qty = dq[key];
       const total = n(qty) * (DENOM_VALUES[key] || 0);
       return `<tr>
         <td>${DENOM_LABELS[key] || key}</td>
@@ -59,15 +60,18 @@ function generateHTML(report) {
       <td class="num">${n(e.amount).toFixed(2)}</td>
     </tr>`).join('');
 
+  const hubbo_total_income = n(report.hubbo_net_cash)+n(report.hubbo_pengeluaran)+n(report.hubbo_qr_transfer)+n(report.hubbo_debit_credit);
+  const actual_total_income_all = n(report.total_income_actual) + n(report.total_other_income_c);
+  const hubbo_total_income_all = hubbo_total_income + n(report.total_other_income_c);
   const summaryRows = [
-    ['Net Cash / Cash Bersih (AA)', report.net_cash_aa, report.hubbo_net_cash, report.diff_net_cash],
-    ['(+) Pengeluaran Cashier (E)', report.total_expenses_e, report.hubbo_pengeluaran, report.diff_pengeluaran],
-    ['Cash Sales', report.cash_sales_actual, n(report.hubbo_net_cash) + n(report.hubbo_pengeluaran), report.diff_cash_sales],
-    ['(+) QR & Transfer (B)', report.total_transfer_qr_b, report.hubbo_qr_transfer, report.diff_qr],
-    ['(+) Debit/Credit Income (D)', report.debit_credit_total_d, report.hubbo_debit_credit, report.diff_dc],
-    ['Total Income', report.total_income_actual, n(report.hubbo_net_cash)+n(report.hubbo_pengeluaran)+n(report.hubbo_qr_transfer)+n(report.hubbo_debit_credit), report.diff_total_income],
-    ['(+) Other Income (B)', report.total_other_income_c, report.total_other_income_c, 0],
-    ['Total Income (All)', n(report.hubbo_total_income_all) + n(report.total_other_income_c), report.hubbo_total_income_all, report.diff_total_all],
+    [false, 'Net Cash / Cash Bersih (AA)', report.net_cash_aa, report.hubbo_net_cash, report.diff_net_cash],
+    [false, '(+) Pengeluaran Cashier (E)', report.total_expenses_e, report.hubbo_pengeluaran, report.diff_pengeluaran],
+    [true,  'Cash Sales', report.cash_sales_actual, n(report.hubbo_net_cash) + n(report.hubbo_pengeluaran), report.diff_cash_sales],
+    [false, '(+) QR & Transfer (B)', report.total_transfer_qr_b, report.hubbo_qr_transfer, report.diff_qr],
+    [false, '(+) Debit/Credit Income (D)', report.debit_credit_total_d, report.hubbo_debit_credit, report.diff_dc],
+    [true,  'Total Income', report.total_income_actual, hubbo_total_income, report.diff_total_income],
+    [false, '(+) Other Income (C)', report.total_other_income_c, report.total_other_income_c, 0],
+    [true,  'Total Income (All)', actual_total_income_all, hubbo_total_income_all, actual_total_income_all - hubbo_total_income_all],
   ];
 
   return `<!DOCTYPE html>
@@ -231,8 +235,8 @@ function generateHTML(report) {
       <th class="num">System (Hubbo)</th>
       <th class="num">Diff</th>
     </tr>
-    ${summaryRows.map(([label, actual, hubbo, diff]) => `
-    <tr>
+    ${summaryRows.map(([bold, label, actual, hubbo, diff]) => `
+    <tr${bold ? ' style="font-weight:700;color:#1a1a1a"' : ''}>
       <td>${label}</td>
       <td class="num">${n(actual).toFixed(2)}</td>
       <td class="num">${n(hubbo).toFixed(2)}</td>

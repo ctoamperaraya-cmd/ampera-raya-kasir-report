@@ -92,7 +92,7 @@ export default function Step8({ form, derived, onSubmit, isSubmitting }) {
       <div className="grand-preview grand-preview--final">
         <div className="grand-preview-row">
           <span>Total Income (Hubbo)</span>
-          <span>{fmt(n(form.hubbo_total_income_all))}</span>
+          <span>{fmt(derived.hubbo_total_income)}</span>
         </div>
         <div className="grand-preview-row">
           <span>(+) Online Food (C)</span>

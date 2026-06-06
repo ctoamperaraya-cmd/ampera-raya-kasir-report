@@ -91,7 +91,6 @@ export default function Step7({ form, setForm, derived }) {
           <span className="scard-title">Summary Sales — Semakan Hubbo</span>
         </div>
 
-        {/* Table header */}
         <div className="hubbo-thead">
           <span className="hubbo-label" style={{ fontWeight: 700 }}>Keterangan</span>
           <span className="hubbo-actual" style={{ fontWeight: 700 }}>Actual</span>
@@ -110,30 +109,12 @@ export default function Step7({ form, setForm, derived }) {
             onChange={r.key ? (v => update(r.key, v)) : null}
           />
         ))}
-
-        {/* Total Income All */}
-        <div className="hubbo-row hubbo-row--total">
-          <span className="hubbo-label" style={{ fontWeight: 700 }}>Total Income (All)</span>
-          <span className="hubbo-actual" style={{ fontWeight: 700 }}>{fmt(derived.total_income_all_actual)}</span>
-          <div className="amount-input-wrap" style={{ width: 90 }}>
-            <span className="amount-prefix" style={{ fontSize: 10 }}>RM</span>
-            <input
-              className="amount-input"
-              style={{ fontSize: 11, width: 68 }}
-              type="number" min="0" step="0.01" placeholder="0.00"
-              value={form.hubbo_total_income_all}
-              onChange={e => update('hubbo_total_income_all', e.target.value)}
-            />
-          </div>
-          <DiffBadge diff={derived.diff_total_all} />
-        </div>
       </div>
 
-      {/* Grand Total Preview */}
       <div className="grand-preview">
         <div className="grand-preview-row">
           <span>Total Income</span>
-          <span>{fmt(n(form.hubbo_total_income_all))}</span>
+          <span>{fmt(derived.hubbo_total_income)}</span>
         </div>
         <div className="grand-preview-row">
           <span>Online Food (C)</span>

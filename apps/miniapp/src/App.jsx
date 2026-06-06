@@ -77,7 +77,7 @@ export default function App() {
   const handleSubmit = async () => {
       const tgId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id ||
              new URLSearchParams(window.location.search).get('telegram_id') || '';
-      alert('DEBUG telegram_id: ' + tgId + '\nURL: ' + window.location.search);
+      // alert('DEBUG telegram_id: ' + tgId + '\nURL: ' + window.location.search);
   console.log('DEBUG telegram_id:', tgId);
   console.log('DEBUG URL params:', window.location.search);
   console.log('DEBUG Telegram WebApp:', window.Telegram?.WebApp?.initDataUnsafe);

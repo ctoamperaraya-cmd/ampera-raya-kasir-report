@@ -115,6 +115,14 @@ router.post('/', requireBotSecret, async (req, res, next) => {
       });
     }
 
+    // Ambil nama kasir dari users table
+    const { data: cashierData } = await supabase
+      .from('users')
+      .select('name')
+      .eq('id', cashier_id)
+      .single();
+    const cashier_name = cashierData?.name || form.cashier_name || '';
+
     // Kira semua nilai automatik
     const derived = calcDerived(form);
 
@@ -126,6 +134,7 @@ router.post('/', requireBotSecret, async (req, res, next) => {
         branch_code:          form.branch,
         report_date:          today,
         day_name:             form.day,
+        cashier_name:         cashier_name,
         // Cash
         denom_qty:            form.denom_qty,
         total_cash_a:         derived.total_cash_a,
@@ -249,6 +258,7 @@ router.patch('/:id', requireBotSecret, async (req, res, next) => {
         total_cash_a:         derived.total_cash_a,
         float_hari_ini:       +form.float_hari_ini || 0,
         net_cash_aa:          derived.net_cash_aa,
+        cashier_name:         cashier_name,  // ← tambah ini
         bank_in:              +form.bank_in || 0,
         bank_in_cash:         +form.bank_in_cash || 0,
         qr_amount:            +form.qr_amount || 0,

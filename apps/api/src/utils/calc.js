@@ -20,7 +20,7 @@ function calcDerived(form) {
   const total_income_all_actual = total_income_actual + total_other_income_c;
   // const float_cash_esok    = total_cash_a - n(form.bank_in);
   const float_cash_esok = total_cash_a - n(form.bank_in_cash);
-  const grand_total        = n(form.hubbo_total_income_all) + total_other_income_c;
+  // const grand_total        = hubbo_total_income + total_other_income_c;
 
   // Hubbo
   const hubbo_net_cash     = n(form.hubbo_net_cash);
@@ -29,6 +29,7 @@ function calcDerived(form) {
   const hubbo_qr           = n(form.hubbo_qr_transfer);
   const hubbo_dc           = n(form.hubbo_debit_credit);
   const hubbo_total_income = hubbo_cash_sales + hubbo_qr + hubbo_dc;
+  const grand_total = hubbo_total_income + total_other_income_c;
 
   return {
     total_cash_a,
@@ -51,7 +52,7 @@ function calcDerived(form) {
     diff_qr:          total_transfer_qr_b - hubbo_qr,
     diff_dc:          debit_credit_total_d - hubbo_dc,
     diff_total_income: total_income_actual - hubbo_total_income,
-    diff_total_all:   total_income_all_actual - n(form.hubbo_total_income_all),
+    diff_total_all:   total_income_actual - hubbo_total_income,
   };
 }
 
