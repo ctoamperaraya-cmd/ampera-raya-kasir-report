@@ -7,8 +7,11 @@ const { isAllowed, getCashier } = require('./utils/auth');
 const { handleStart }    = require('./handlers/start');
 const { handleCallback } = require('./handlers/callback');
 const { startCronJobs }  = require('./utils/cron');
+const { handleAddUser, handleRemoveUser, handleListUsers } = require('./handlers/admin');
 
 if (!process.env.BOT_TOKEN) throw new Error('❌ BOT_TOKEN wajib ada dalam .env');
+
+const ADMIN_IDS = (process.env.ADMIN_TELEGRAM_IDS || '').split(',').map(id => id.trim());
 
 const bot  = new Bot(process.env.BOT_TOKEN);
 const app  = express();
@@ -18,7 +21,17 @@ const PORT = process.env.BOT_PORT || 3001;
 bot.use(async (ctx, next) => {
   if (!ctx.from) return next();
   const telegramId = String(ctx.from.id);
-  const allowed    = await isAllowed(telegramId);
+
+  // Admin commands bypass whitelist
+  const isAdminCmd = ctx.message?.text?.startsWith('/adduser') ||
+                     ctx.message?.text?.startsWith('/removeuser') ||
+                     ctx.message?.text?.startsWith('/listusers');
+
+  if (ADMIN_IDS.includes(telegramId) && isAdminCmd) {
+    return next();
+  }
+
+  const allowed = await isAllowed(telegramId);
   if (!allowed) {
     await ctx.reply(
       '⛔ *Maaf, anda tidak mempunyai akses ke sistem ini.*\n\nSila hubungi admin untuk mendaftarkan akaun anda.',
@@ -32,6 +45,7 @@ bot.use(async (ctx, next) => {
 
 // ── Commands ──────────────────────────────────────────────────────
 bot.command('start',  handleStart);
+
 bot.command('status', async (ctx) => {
   const today  = new Date().toISOString().slice(0, 10);
   const branch = ctx.cashier?.branch_code;
@@ -61,6 +75,11 @@ bot.command('help', (ctx) => ctx.reply(
   { parse_mode: 'Markdown' }
 ));
 
+// ── Admin Commands ────────────────────────────────────────────────
+bot.command('adduser',    handleAddUser);
+bot.command('removeuser', handleRemoveUser);
+bot.command('listusers',  handleListUsers);
+
 // ── Callback queries ──────────────────────────────────────────────
 bot.on('callback_query:data', handleCallback);
 
@@ -73,8 +92,6 @@ async function startBot() {
 
   app.use(express.json());
 
-  // Serve miniapp dist sebagai static files
-  // Build dulu: cd apps/miniapp && npm run build
   const miniappDist = path.join(__dirname, '..', '..', '..', 'apps', 'miniapp', 'dist');
   app.use('/app', express.static(miniappDist));
   app.get('/app/*', (_req, res) => {
