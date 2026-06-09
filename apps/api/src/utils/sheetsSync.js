@@ -148,7 +148,7 @@ async function syncExpensesToSheets(report, sheets) {
       report.branch_code,
       report.cashier_name || '',
       idx + 1,
-      e.description || '',
+      e.detail || e.description || '',
       Number(e.amount || 0).toFixed(2),
     ]);
 
