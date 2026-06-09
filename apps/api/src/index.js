@@ -27,7 +27,7 @@ app.use(cors({
 }));
 
 // Raw body untuk Telegram webhook (sebelum json parser)
-app.use('/webhook', express.raw({ type: 'application/json' }), webhookRouter);
+app.use("/webhook", express.json(), webhookRouter);
 
 app.use(express.json());
 
