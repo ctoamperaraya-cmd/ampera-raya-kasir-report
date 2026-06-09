@@ -11,6 +11,7 @@ router.post('/supabase', async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
+    console.log('🔍 Webhook payload:', JSON.stringify(req.body, null, 2));
     const { type, record, old_record } = req.body;
 
     console.log(`📡 Supabase webhook: ${type}`, record?.id || old_record?.id);
