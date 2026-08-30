@@ -42,17 +42,24 @@ router.get('/status-today', requireAuth, requireAdmin, async (req, res, next) =>
 
     const { data: reports } = await supabase
       .from('reports')
-      .select('branch_code, status, submitted_at, cashier_id, users(name)')
-      .eq('report_date', today);
+      .select('id, branch_code, status, submitted_at, grand_total, cashier_id, users(name)')
+      .eq('report_date', today)
+      .order('submitted_at', { ascending: true });
 
     const BRANCHES = ['KW','KJ','S13','S7','KLTS','KD','TTDI'];
     const result = BRANCHES.map(code => {
-      const report = reports?.find(r => r.branch_code === code);
+      const branchReports = (reports || []).filter(r => r.branch_code === code);
       return {
         branch_code: code,
-        status: report ? report.status : 'belum',
-        submitted_at: report?.submitted_at || null,
-        kasir: report?.users?.name || null,
+        status: branchReports.length ? 'submitted' : 'belum',
+        submission_count: branchReports.length,
+        submissions: branchReports.map(r => ({
+          id: r.id,
+          status: r.status,
+          submitted_at: r.submitted_at,
+          grand_total: r.grand_total,
+          kasir: r.users?.name || null,
+        })),
       };
     });
 
@@ -83,19 +90,6 @@ router.post('/', requireBotSecret, async (req, res, next) => {
     const { cashier_id, telegram_id, form } = req.body;
 
     const today = form.date || dayjs().format('YYYY-MM-DD');
-    const { data: existing } = await supabase
-      .from('reports')
-      .select('id')
-      .eq('branch_code', form.branch)
-      .eq('report_date', today)
-      .single();
-
-    if (existing) {
-      return res.status(409).json({
-        error: 'Laporan untuk cawangan ini hari ini sudah wujud.',
-        existing_id: existing.id,
-      });
-    }
 
     const { data: cashierData } = await supabase
       .from('users')

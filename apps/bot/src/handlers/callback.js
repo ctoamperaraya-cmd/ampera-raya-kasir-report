@@ -20,14 +20,14 @@ async function handleStatusToday(ctx) {
   const today      = dayjs().format('YYYY-MM-DD');
   const branchName = BRANCH_NAMES[cashier?.branch_code] || cashier?.branch_code;
 
-  const { data: report } = await supabase
+  const { data: reports } = await supabase
     .from('reports')
     .select('status, submitted_at, grand_total, diff_total_all')
     .eq('branch_code', cashier?.branch_code)
     .eq('report_date', today)
-    .single();
+    .order('submitted_at', { ascending: true });
 
-  if (!report) {
+  if (!reports || reports.length === 0) {
     return ctx.reply(
       `📊 *Status Laporan — ${branchName}*\n\n` +
       `❌ Belum dihantar\n\n` +
@@ -36,17 +36,24 @@ async function handleStatusToday(ctx) {
     );
   }
 
-  const time     = dayjs(report.submitted_at).format('HH:mm');
-  const hasDiff  = Math.abs(Number(report.diff_total_all)) > 0.01;
-  const diffText = hasDiff
-    ? `⚠️ Diff Hubbo: *RM ${Math.abs(Number(report.diff_total_all)).toFixed(2)}*`
-    : `✅ Tiada perbezaan Hubbo`;
+  const lines = reports.map((report, idx) => {
+    const time     = dayjs(report.submitted_at).format('HH:mm');
+    const hasDiff  = Math.abs(Number(report.diff_total_all)) > 0.01;
+    const diffText = hasDiff
+      ? `⚠️ Diff Hubbo: *RM ${Math.abs(Number(report.diff_total_all)).toFixed(2)}*`
+      : `✅ Tiada perbezaan Hubbo`;
+
+    return (
+      `*Penghantaran ${idx + 1} — ${time}*\n` +
+      `💰 Grand Total: *RM ${Number(report.grand_total).toFixed(2)}*\n` +
+      `${diffText}`
+    );
+  });
 
   return ctx.reply(
     `📊 *Status Laporan — ${branchName}*\n\n` +
-    `✅ Sudah dihantar pada *${time}*\n` +
-    `💰 Grand Total: *RM ${Number(report.grand_total).toFixed(2)}*\n` +
-    `${diffText}`,
+    `✅ ${reports.length} laporan dihantar hari ini\n\n` +
+    lines.join('\n\n'),
     { parse_mode: 'Markdown' }
   );
 }

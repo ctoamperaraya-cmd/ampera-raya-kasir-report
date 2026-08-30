@@ -95,18 +95,20 @@ CREATE TABLE IF NOT EXISTS reports (
   unlock_reason         TEXT,
   unlocked_by           UUID REFERENCES users(id) ON DELETE SET NULL,
   unlocked_at           TIMESTAMPTZ,
-  created_at            TIMESTAMPTZ DEFAULT NOW(),
+  created_at            TIMESTAMPTZ DEFAULT NOW()
 
-  -- Constraint: 1 laporan per cabang per hari
-  CONSTRAINT unique_branch_date UNIQUE (branch_code, report_date)
+  -- Nota: dahulu ada CONSTRAINT unique_branch_date UNIQUE (branch_code, report_date)
+  -- yang menghadkan 1 laporan per cabang per hari. Ini telah dibuang supaya
+  -- cawangan boleh hantar >1 laporan (contoh: koreksi) dalam hari yang sama.
 );
 
 -- ─────────────────────────────────────────────────────────────────
 -- INDEXES
 -- ─────────────────────────────────────────────────────────────────
-CREATE INDEX IF NOT EXISTS idx_reports_branch     ON reports(branch_code);
-CREATE INDEX IF NOT EXISTS idx_reports_date       ON reports(report_date DESC);
-CREATE INDEX IF NOT EXISTS idx_reports_status     ON reports(status);
+CREATE INDEX IF NOT EXISTS idx_reports_branch      ON reports(branch_code);
+CREATE INDEX IF NOT EXISTS idx_reports_date        ON reports(report_date DESC);
+CREATE INDEX IF NOT EXISTS idx_reports_status      ON reports(status);
+CREATE INDEX IF NOT EXISTS idx_reports_branch_date ON reports(branch_code, report_date);
 CREATE INDEX IF NOT EXISTS idx_users_telegram     ON users(telegram_id);
 CREATE INDEX IF NOT EXISTS idx_users_branch       ON users(branch_code);
 
