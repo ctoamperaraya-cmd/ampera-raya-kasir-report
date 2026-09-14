@@ -3,13 +3,13 @@ const { invalidateCache } = require('../utils/auth');
 
 const ADMIN_IDS = (process.env.ADMIN_TELEGRAM_IDS || '').split(',').map(id => id.trim());
 
-const VALID_BRANCHES = ['KW', 'KJ', 'S13', 'S7', 'KLTS', 'KD', 'TTDI'];
+const VALID_BRANCHES = ['KW', 'KJ', 'S13', 'S7', 'KLTS', 'KD', 'TTDI', 'PSJ'];
 const VALID_ROLES    = ['cashier', 'manager', 'admin'];
 
 const BRANCH_NAMES = {
   KW: 'Kota Warisan', KJ: 'Taman Putra Kajang',
   S13: 'Shah Alam Seksyen 13', S7: 'Shah Alam Seksyen 7',
-  KLTS: 'Plaza KLTS', KD: 'Kota Damansara', TTDI: 'TTDI',
+  KLTS: 'Plaza KLTS', KD: 'Kota Damansara', TTDI: 'TTDI', PSJ: 'Penang Seberang Jaya',
 };
 
 function isAdmin(ctx) {

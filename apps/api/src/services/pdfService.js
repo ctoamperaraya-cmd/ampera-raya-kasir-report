@@ -11,6 +11,7 @@ const BRANCH_NAMES = {
   KLTS: 'Plaza KLTS',
   KD:   'Kota Damansara',
   TTDI: 'TTDI',
+  PSJ:  'Penang Seberang Jaya',
 };
 
 const DENOM_LABELS = {

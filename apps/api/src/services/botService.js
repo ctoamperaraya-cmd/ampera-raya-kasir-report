@@ -6,7 +6,7 @@ const ADMIN_GROUP_ID = process.env.ADMIN_GROUP_ID;
 const BRANCH_NAMES = {
   KW: 'Kota Warisan', KJ: 'Taman Putra Kajang',
   S13: 'Shah Alam Seksyen 13', S7: 'Shah Alam Seksyen 7',
-  KLTS: 'Plaza KLTS', KD: 'Kota Damansara', TTDI: 'TTDI',
+  KLTS: 'Plaza KLTS', KD: 'Kota Damansara', TTDI: 'TTDI', PSJ: 'Penang Seberang Jaya',
 };
 
 const n = (v) => parseFloat(v) || 0;

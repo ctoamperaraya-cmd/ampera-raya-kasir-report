@@ -6,6 +6,7 @@ export const BRANCHES = [
   { code: 'KLTS', name: 'Plaza KLTS' },
   { code: 'KD',   name: 'Kota Damansara' },
   { code: 'TTDI', name: 'TTDI' },
+  { code: 'PSJ',  name: 'Penang Seberang Jaya' },
 ];
 
 export const DENOMINATIONS = [

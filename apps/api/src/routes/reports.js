@@ -46,7 +46,7 @@ router.get('/status-today', requireAuth, requireAdmin, async (req, res, next) =>
       .eq('report_date', today)
       .order('submitted_at', { ascending: true });
 
-    const BRANCHES = ['KW','KJ','S13','S7','KLTS','KD','TTDI'];
+    const BRANCHES = ['KW','KJ','S13','S7','KLTS','KD','TTDI','PSJ'];
     const result = BRANCHES.map(code => {
       const branchReports = (reports || []).filter(r => r.branch_code === code);
       return {

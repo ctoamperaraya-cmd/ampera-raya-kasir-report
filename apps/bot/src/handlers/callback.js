@@ -4,7 +4,7 @@ const dayjs    = require('dayjs');
 const BRANCH_NAMES = {
   KW: 'Kota Warisan', KJ: 'Taman Putra Kajang',
   S13: 'Shah Alam Seksyen 13', S7: 'Shah Alam Seksyen 7',
-  KLTS: 'Plaza KLTS', KD: 'Kota Damansara', TTDI: 'TTDI',
+  KLTS: 'Plaza KLTS', KD: 'Kota Damansara', TTDI: 'TTDI', PSJ: 'Penang Seberang Jaya',
 };
 
 async function handleCallback(ctx) {
