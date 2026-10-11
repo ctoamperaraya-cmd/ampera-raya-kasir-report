@@ -163,7 +163,7 @@ router.post('/', requireBotSecret, async (req, res, next) => {
       .then(pdfUrl => {
         supabase.from('reports').update({ pdf_url: pdfUrl }).eq('id', report.id);
         botService.sendPdfToCashier(telegram_id, pdfUrl, report);
-        botService.notifyAdminGroup(report);
+        botService.notifyAdminGroup(report, false, pdfUrl);
       })
       .catch(err => console.error('❌ PDF/Bot error:', err.message, err.stack));
 
@@ -273,7 +273,7 @@ router.patch('/:id', requireBotSecret, async (req, res, next) => {
       .then(pdfUrl => {
         supabase.from('reports').update({ pdf_url: pdfUrl }).eq('id', report.id);
         botService.sendPdfToCashier(telegram_id, pdfUrl, report);
-        botService.notifyAdminGroup(report, true);
+        botService.notifyAdminGroup(report, true, pdfUrl);
       })
       .catch(err => console.error('❌ PDF/Bot error:', err));
 

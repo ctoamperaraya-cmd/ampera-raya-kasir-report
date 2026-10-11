@@ -54,32 +54,56 @@ async function sendPdfToCashier(telegramId, pdfUrl, report) {
 }
 
 /**
- * Notify grup admin bila laporan baru masuk
+ * Daftar penerima admin (boleh banyak, pisahkan dengan koma)
+ * Contoh: ADMIN_GROUP_ID=8401430689  atau  ADMIN_GROUP_ID=8401430689,-1001234567890
  */
-async function notifyAdminGroup(report, isEdit = false) {
-  if (!ADMIN_GROUP_ID) return;
+function adminTargets() {
+  return (process.env.ADMIN_GROUP_ID || '').split(',').map(x => x.trim()).filter(Boolean);
+}
+
+const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/**
+ * Hantar laporan (PDF + ringkasan) ke admin sebaik sahaja kasir submit.
+ * Guna HTML parse mode supaya tanda baca seperti "." tidak menyebabkan error.
+ */
+async function notifyAdminGroup(report, isEdit = false, pdfUrl = null) {
+  const targets = adminTargets();
+  if (!targets.length) return;
 
   const branchName = BRANCH_NAMES[report.branch_code] || report.branch_code;
   const hasDiff = Math.abs(n(report.diff_total_all)) > 0.01;
   const emoji = isEdit ? '✏️' : '📋';
 
-  const text = [
-    `${emoji} *Laporan ${isEdit ? '\\(EDIT\\) ' : ''}Masuk*`,
+  const caption = [
+    `${emoji} <b>Laporan ${isEdit ? '(EDIT) ' : ''}Masuk</b>`,
     ``,
-    `📍 ${branchName} \\(${report.branch_code}\\)`,
-    `📅 ${dayjs(report.report_date).format('DD/MM/YYYY')}`,
-    `💰 Grand Total: *${fmt(report.grand_total)}*`,
+    `📍 ${esc(branchName)} (${esc(report.branch_code)})`,
+    `👤 Kasir: ${esc(report.cashier_name || '-')}`,
+    `📅 ${esc(report.day_name || '')}, ${dayjs(report.report_date).format('DD/MM/YYYY')}`,
+    `💰 Grand Total: <b>${esc(fmt(report.grand_total))}</b>`,
     hasDiff
-      ? `⚠️ Perbezaan Hubbo: *${fmt(Math.abs(report.diff_total_all))}*`
+      ? `⚠️ Perbezaan Hubbo: <b>${esc(fmt(Math.abs(report.diff_total_all)))}</b>`
       : `✅ Tiada perbezaan Hubbo`,
     `🕐 ${dayjs().format('HH:mm')}`,
   ].join('\n');
 
-  await telegramRequest('sendMessage', {
-    chat_id: ADMIN_GROUP_ID,
-    text,
-    parse_mode: 'MarkdownV2',
-  });
+  for (const chat_id of targets) {
+    try {
+      let res;
+      if (pdfUrl) {
+        res = await telegramRequest('sendDocument', { chat_id, document: pdfUrl, caption, parse_mode: 'HTML' });
+      }
+      // Fallback ke teks bila PDF tiada / gagal
+      if (!res || !res.ok) {
+        if (res) console.warn('⚠️ sendDocument admin gagal:', JSON.stringify(res));
+        res = await telegramRequest('sendMessage', { chat_id, text: caption, parse_mode: 'HTML' });
+      }
+      if (res && !res.ok) console.error('❌ Notify admin gagal ->', chat_id, JSON.stringify(res));
+    } catch (err) {
+      console.error('❌ Notify admin error ->', chat_id, err.message);
+    }
+  }
 }
 
 /**
@@ -126,7 +150,8 @@ async function sendReminder(telegramId, branchName) {
  * Hantar status harian semua cabang ke grup admin (cron jam 23:00)
  */
 async function sendDailyStatusToAdmin(statusList) {
-  if (!ADMIN_GROUP_ID) return;
+  const targets = adminTargets();
+  if (!targets.length) return;
 
   const today = dayjs().format('DD/MM/YYYY');
   const lines = statusList.map(s => {
@@ -148,11 +173,9 @@ async function sendDailyStatusToAdmin(statusList) {
       : `⚠️ *${belum.length} cawangan belum lapor:*\n${belum.map(s => `• ${s.branch_code}`).join('\n')}`,
   ].join('\n');
 
-  await telegramRequest('sendMessage', {
-    chat_id: ADMIN_GROUP_ID,
-    text,
-    parse_mode: 'MarkdownV2',
-  });
+  for (const chat_id of targets) {
+    await telegramRequest('sendMessage', { chat_id, text, parse_mode: 'MarkdownV2' }).catch(console.error);
+  }
 }
 
 module.exports = {

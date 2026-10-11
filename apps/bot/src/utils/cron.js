@@ -1,5 +1,8 @@
 const supabase = require('../utils/supabase');
 const dayjs    = require('dayjs');
+dayjs.extend(require('dayjs/plugin/utc'));
+dayjs.extend(require('dayjs/plugin/timezone'));
+dayjs.tz.setDefault('Asia/Kuala_Lumpur');
 
 const BRANCH_NAMES = {
   KW: 'Kota Warisan', KJ: 'Taman Putra Kajang',
@@ -24,7 +27,7 @@ async function telegramSend(chatId, text, extra = {}) {
  * Panggil jam 10:00 malam
  */
 async function sendReminders() {
-  const today = dayjs().format('YYYY-MM-DD');
+  const today = dayjs().tz('Asia/Kuala_Lumpur').format('YYYY-MM-DD');
 
   // Ambil semua laporan yang dah submit hari ini
   const { data: submitted } = await supabase
@@ -69,11 +72,11 @@ async function sendReminders() {
  * Panggil jam 11:00 malam
  */
 async function sendDailyStatusToAdmin() {
-  const ADMIN_GROUP = process.env.ADMIN_GROUP_ID;
-  if (!ADMIN_GROUP) return;
+  const targets = (process.env.ADMIN_GROUP_ID || '').split(',').map(x => x.trim()).filter(Boolean);
+  if (!targets.length) return;
 
-  const today = dayjs().format('YYYY-MM-DD');
-  const todayLabel = dayjs().format('DD/MM/YYYY');
+  const today = dayjs().tz('Asia/Kuala_Lumpur').format('YYYY-MM-DD');
+  const todayLabel = dayjs().tz('Asia/Kuala_Lumpur').format('DD/MM/YYYY');
 
   const { data: reports } = await supabase
     .from('reports')
@@ -97,8 +100,7 @@ async function sendDailyStatusToAdmin() {
   const belum  = ALL_BRANCHES.length - sudah;
   const totalGrand = (reports || []).reduce((s, r) => s + Number(r.grand_total), 0);
 
-  await telegramSend(
-    ADMIN_GROUP,
+  const statusText =
     `📊 *Status Laporan Harian*\n` +
     `📅 ${todayLabel}\n\n` +
     lines.join('\n') +
@@ -106,8 +108,9 @@ async function sendDailyStatusToAdmin() {
     `*Ringkasan:*\n` +
     `✅ Sudah lapor: ${sudah}/${ALL_BRANCHES.length}\n` +
     (belum > 0 ? `❌ Belum lapor: ${belum}\n` : '') +
-    `💰 Jumlah keseluruhan: *RM ${totalGrand.toFixed(2)}*`,
-  );
+    `💰 Jumlah keseluruhan: *RM ${totalGrand.toFixed(2)}*`;
+
+  for (const id of targets) await telegramSend(id, statusText).catch(console.error);
 
   console.log(`📊 Status harian dihantar ke admin group`);
 }
@@ -120,7 +123,7 @@ function startCronJobs() {
   console.log('⏱️  Cron jobs aktif (semak setiap minit)');
 
   setInterval(async () => {
-    const now = dayjs().tz ? dayjs().tz('Asia/Kuala_Lumpur') : dayjs();
+    const now = dayjs().tz('Asia/Kuala_Lumpur');
     const h   = now.hour();
     const m   = now.minute();
 
