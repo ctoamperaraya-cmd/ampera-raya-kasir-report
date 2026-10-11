@@ -16,6 +16,15 @@ const n   = (v) => parseFloat(v) || 0;
 const fmt = (v) => 'RM ' + n(v).toLocaleString('en-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const esc = (v) => String(v ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+/** URL PDF: guna pdf_url; kalau kosong (laporan lama), bina semula dari lokasi storage */
+function pdfUrlOf(r) {
+  if (r.pdf_url) return r.pdf_url;
+  const base = process.env.SUPABASE_URL;
+  if (!base || !r.id) return null;
+  const file = `${r.branch_code}_${r.report_date}_${String(r.id).slice(0, 8)}.pdf`;
+  return `${base}/storage/v1/object/public/kasir-reports/reports/${r.branch_code}/${file}`;
+}
+
 const list = (s) => (s || '').split(',').map(x => x.trim()).filter(Boolean);
 
 /** Siapa boleh lihat semua laporan: ID di ADMIN_TELEGRAM_IDS / ADMIN_GROUP_ID, atau role admin/manager/superadmin */
@@ -40,7 +49,7 @@ async function handleReportsToday(ctx) {
 
     const { data: rows, error } = await supabase
       .from('reports')
-      .select('branch_code, cashier_name, day_name, report_date, submitted_at, edited_at, grand_total, diff_total_all, pdf_url')
+      .select('id, branch_code, cashier_name, day_name, report_date, submitted_at, edited_at, grand_total, diff_total_all, pdf_url')
       .eq('report_date', today)
       .order('submitted_at', { ascending: true });
     if (error) throw error;
@@ -93,14 +102,12 @@ async function handleReportsToday(ctx) {
             : `✅ Tiada perbezaan Hubbo`);
 
         try {
-          if (r.pdf_url) {
-            await ctx.replyWithDocument(r.pdf_url, { caption, parse_mode: 'HTML' });
-          } else {
-            await ctx.reply(caption + `\n\n⏳ PDF belum siap.`, { parse_mode: 'HTML' });
-          }
+          const url = pdfUrlOf(r);
+          if (!url) throw new Error('tiada URL PDF');
+          await ctx.replyWithDocument(url, { caption, parse_mode: 'HTML' });
         } catch (err) {
           console.error(`❌ Gagal hantar PDF ${code}:`, err.message);
-          await ctx.reply(caption + `\n\n⚠️ PDF gagal dihantar.`, { parse_mode: 'HTML' }).catch(() => {});
+          await ctx.reply(caption + `\n\n⏳ PDF belum siap / gagal dihantar.`, { parse_mode: 'HTML' }).catch(() => {});
         }
       }
     }

@@ -160,8 +160,9 @@ router.post('/', requireBotSecret, async (req, res, next) => {
 
     // Generate PDF (async)
     pdfService.generateAndUpload(report)
-      .then(pdfUrl => {
-        supabase.from('reports').update({ pdf_url: pdfUrl }).eq('id', report.id);
+      .then(async pdfUrl => {
+        const { error: pdfErr } = await supabase.from('reports').update({ pdf_url: pdfUrl }).eq('id', report.id);
+        if (pdfErr) console.error('❌ Gagal simpan pdf_url:', pdfErr.message);
         botService.sendPdfToCashier(telegram_id, pdfUrl, report);
         botService.notifyAdminGroup(report, false, pdfUrl);
       })
@@ -270,8 +271,9 @@ router.patch('/:id', requireBotSecret, async (req, res, next) => {
 
     // Generate semula PDF
     pdfService.generateAndUpload(report)
-      .then(pdfUrl => {
-        supabase.from('reports').update({ pdf_url: pdfUrl }).eq('id', report.id);
+      .then(async pdfUrl => {
+        const { error: pdfErr } = await supabase.from('reports').update({ pdf_url: pdfUrl }).eq('id', report.id);
+        if (pdfErr) console.error('❌ Gagal simpan pdf_url:', pdfErr.message);
         botService.sendPdfToCashier(telegram_id, pdfUrl, report);
         botService.notifyAdminGroup(report, true, pdfUrl);
       })
