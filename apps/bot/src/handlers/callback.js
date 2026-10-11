@@ -1,5 +1,6 @@
 const supabase = require('../utils/supabase');
 const dayjs    = require('dayjs');
+const { handleReportsToday } = require('./reports');
 
 const BRANCH_NAMES = {
   KW: 'Kota Warisan', KJ: 'Taman Putra Kajang',
@@ -13,6 +14,7 @@ async function handleCallback(ctx) {
 
   if (data === 'status_today') return handleStatusToday(ctx);
   if (data === 'help')         return handleHelp(ctx);
+  if (data === 'reports_today') return handleReportsToday(ctx);
 }
 
 async function handleStatusToday(ctx) {

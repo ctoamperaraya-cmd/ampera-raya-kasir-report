@@ -5,6 +5,7 @@ const path     = require('path');
 const supabase = require('./utils/supabase');
 const { isAllowed, getCashier } = require('./utils/auth');
 const { handleStart }    = require('./handlers/start');
+const { handleReportsToday } = require('./handlers/reports');
 const { handleCallback } = require('./handlers/callback');
 const { startCronJobs }  = require('./utils/cron');
 const { handleAddUser, handleRemoveUser, handleListUsers } = require('./handlers/admin');
@@ -25,7 +26,8 @@ bot.use(async (ctx, next) => {
   // Admin commands bypass whitelist
   const isAdminCmd = ctx.message?.text?.startsWith('/adduser') ||
                      ctx.message?.text?.startsWith('/removeuser') ||
-                     ctx.message?.text?.startsWith('/listusers');
+                     ctx.message?.text?.startsWith('/listusers') ||
+                     ctx.message?.text?.startsWith('/laporan');
 
   if (ADMIN_IDS.includes(telegramId) && isAdminCmd) {
     return next();
@@ -45,6 +47,7 @@ bot.use(async (ctx, next) => {
 
 // ── Commands ──────────────────────────────────────────────────────
 bot.command('start',  handleStart);
+bot.command('laporan', handleReportsToday);
 
 bot.command('status', async (ctx) => {
   const today  = new Date().toISOString().slice(0, 10);

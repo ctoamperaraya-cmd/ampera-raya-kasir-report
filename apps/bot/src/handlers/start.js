@@ -1,6 +1,7 @@
 const { InlineKeyboard } = require('grammy');
 const supabase = require('../utils/supabase');
 const dayjs    = require('dayjs');
+const { canViewAll } = require('./reports');
 
 const BRANCH_NAMES = {
   KW: 'Kota Warisan', KJ: 'Taman Putra Kajang',
@@ -20,6 +21,10 @@ async function handleStart(ctx) {
       .row()
       .text('📊 Status Hari Ini', 'status_today')
       .text('❓ Bantuan', 'help');
+
+    if (canViewAll(ctx)) {
+      keyboard.row().text('📑 Semua Laporan Hari Ini', 'reports_today');
+    }
 
     await ctx.reply(
       `👋 Selamat datang, *${cashier?.name}*!\n\n` +
