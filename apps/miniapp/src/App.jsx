@@ -14,7 +14,13 @@ const STEP_COMPONENTS = [Step1, Step2, Step3, Step4, Step5, Step6, Step7, Step8]
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const API_SECRET = import.meta.env.VITE_API_SECRET || '';
-const getInitData = () => window.Telegram?.WebApp?.initData || '';
+const getInitData = () => {
+  const fromSdk = window.Telegram?.WebApp?.initData;
+  if (fromSdk) return fromSdk;
+  // Cadangan: Telegram juga menyelitkan initData dalam URL hash (#tgWebAppData=...)
+  try { return new URLSearchParams(window.location.hash.replace(/^#/, '')).get('tgWebAppData') || ''; }
+  catch { return ''; }
+};
 
 function validateStep(step, form, derived) {
   if (step === 1) {
@@ -76,7 +82,7 @@ export default function App() {
         if (res.ok) { setAccess('ok'); return; }
         const data = await res.json().catch(() => ({}));
         if (res.status === 401 || res.status === 403) {
-          setAccessMsg(data.error || 'Akses ditutup. Sila hubungi admin.');
+          setAccessMsg((data.error || 'Akses ditutup. Sila hubungi admin.') + (data.reason ? ` (${data.reason})` : ''));
           setAccess('denied');
         } else {
           setAccessMsg('Gagal menyemak akses. Cuba semula.');

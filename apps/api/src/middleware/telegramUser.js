@@ -10,13 +10,14 @@ const MAX_AGE_SEC = 24 * 60 * 60;
  * Ini bukti sebenar bahawa permintaan datang daripada akaun Telegram tersebut —
  * tidak boleh dipalsukan hanya dengan mengubah URL atau cashier_id.
  */
-function parseInitData(initData) {
+function checkInitData(initData) {
   const botToken = process.env.BOT_TOKEN;
-  if (!botToken || !initData || typeof initData !== 'string') return null;
+  if (!botToken) return { user: null, reason: 'NO_BOT_TOKEN' };
+  if (!initData || typeof initData !== 'string') return { user: null, reason: 'NO_INIT_DATA' };
 
   const params = new URLSearchParams(initData);
   const hash = params.get('hash');
-  if (!hash) return null;
+  if (!hash) return { user: null, reason: 'NO_HASH' };
   params.delete('hash');
 
   const dataCheckString = [...params.entries()]
@@ -29,13 +30,15 @@ function parseInitData(initData) {
 
   const a = Buffer.from(expected, 'hex');
   const b = Buffer.from(hash, 'hex');
-  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return { user: null, reason: 'BAD_SIGNATURE' };
 
   const authDate = Number(params.get('auth_date'));
-  if (!authDate || Date.now() / 1000 - authDate > MAX_AGE_SEC) return null;
+  if (!authDate || Date.now() / 1000 - authDate > MAX_AGE_SEC) return { user: null, reason: 'EXPIRED' };
 
-  try { return JSON.parse(params.get('user')); } catch { return null; }
+  try { return { user: JSON.parse(params.get('user')), reason: null }; } catch { return { user: null, reason: 'NO_USER' }; }
 }
+
+const parseInitData = (initData) => checkInitData(initData).user;
 
 /**
  * Middleware: hanya pengguna Telegram yang AKTIF dalam table users boleh lalu.
@@ -46,11 +49,13 @@ function parseInitData(initData) {
  */
 async function requireActiveTelegramUser(req, res, next) {
   try {
-    const tg = parseInitData(req.headers['x-telegram-init-data']);
+    const { user: tg, reason } = checkInitData(req.headers['x-telegram-init-data']);
     if (!tg?.id) {
+      console.warn('[akses-telegram] initData ditolak:', reason || 'NO_USER');
       return res.status(401).json({
         error: 'Sila buka borang ini melalui bot Telegram.',
         code: 'NO_TELEGRAM_AUTH',
+        reason: reason || 'NO_USER',
       });
     }
 
