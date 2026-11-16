@@ -14,6 +14,7 @@ const STEP_COMPONENTS = [Step1, Step2, Step3, Step4, Step5, Step6, Step7, Step8]
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 const API_SECRET = import.meta.env.VITE_API_SECRET || '';
+const getInitData = () => window.Telegram?.WebApp?.initData || '';
 
 function validateStep(step, form, derived) {
   if (step === 1) {
@@ -60,6 +61,34 @@ export default function App() {
     }
   }, []);
 
+  // Semak akses sebaik Mini App dibuka: pengguna yang sudah dinyahaktifkan tidak boleh teruskan
+  const [access, setAccess] = useState('checking'); // checking | ok | denied | error
+  const [accessMsg, setAccessMsg] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/session`, {
+          headers: { 'x-telegram-init-data': getInitData() },
+        });
+        if (cancelled) return;
+        if (res.ok) { setAccess('ok'); return; }
+        const data = await res.json().catch(() => ({}));
+        if (res.status === 401 || res.status === 403) {
+          setAccessMsg(data.error || 'Akses ditutup. Sila hubungi admin.');
+          setAccess('denied');
+        } else {
+          setAccessMsg('Gagal menyemak akses. Cuba semula.');
+          setAccess('error');
+        }
+      } catch {
+        if (!cancelled) { setAccessMsg('Gagal menyambung ke server. Semak sambungan internet anda.'); setAccess('error'); }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   const goNext = () => {
     const err = validateStep(step, form, derived);
     if (err) { setError(err); return; }
@@ -97,6 +126,7 @@ export default function App() {
         headers: {
           'Content-Type':  'application/json',
           'x-bot-secret':  API_SECRET,
+          'x-telegram-init-data': getInitData(),
         },
         
         body: JSON.stringify({
@@ -152,6 +182,27 @@ export default function App() {
       setIsSubmitting(false);
     }
   };
+
+  if (access !== 'ok') {
+    return (
+      <div className="app-shell">
+        <div className="success-screen">
+          {access === 'checking' ? (
+            <p className="success-sub">Menyemak akses...</p>
+          ) : (
+            <>
+              <div className="success-icon">{access === 'denied' ? '⛔' : '⚠️'}</div>
+              <h2 className="success-title">{access === 'denied' ? 'Akses Ditutup' : 'Ralat'}</h2>
+              <p className="success-sub">{accessMsg}</p>
+              {access === 'error' && (
+                <button className="back-btn" style={{ marginTop: 12 }} onClick={() => window.location.reload()}>Muat semula</button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const progress = ((step - 1) / (STEPS.length - 1)) * 100;
   const StepComp = STEP_COMPONENTS[step - 1];

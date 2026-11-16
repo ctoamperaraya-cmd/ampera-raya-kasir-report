@@ -2,6 +2,7 @@ const express = require('express');
 const router  = express.Router();
 const supabase = require('../utils/supabase');
 const { requireAuth, requireAdmin, requireBotSecret } = require('../middleware/auth');
+const { requireActiveTelegramUser } = require('../middleware/telegramUser');
 const { calcDerived } = require('../utils/calc');
 const pdfService = require('../services/pdfService');
 const botService = require('../services/botService');
@@ -85,9 +86,12 @@ router.get('/:id', requireAuth, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/', requireBotSecret, async (req, res, next) => {
+router.post('/', requireBotSecret, requireActiveTelegramUser, async (req, res, next) => {
   try {
-    const { cashier_id, telegram_id, form } = req.body;
+    // Identiti diambil dari Telegram (ditandatangani) — bukan dari body yang boleh dipalsukan
+    const { form } = req.body;
+    const cashier_id  = req.tgUser.id;
+    const telegram_id = String(req.tgUser.telegram_id);
 
     const today = form.date || dayjs().format('YYYY-MM-DD');
 
@@ -196,18 +200,23 @@ router.patch('/:id/unlock', requireAuth, requireAdmin, async (req, res, next) =>
   } catch (err) { next(err); }
 });
 
-router.patch('/:id', requireBotSecret, async (req, res, next) => {
+router.patch('/:id', requireBotSecret, requireActiveTelegramUser, async (req, res, next) => {
   try {
-    const { form, telegram_id } = req.body;
+    const { form } = req.body;
+    const telegram_id = String(req.tgUser.telegram_id);
 
     const { data: existing } = await supabase
       .from('reports')
-      .select('status, cashier_name')
+      .select('status, cashier_name, branch_code')
       .eq('id', req.params.id)
       .single();
 
     if (!existing || existing.status !== 'unlocked') {
       return res.status(403).json({ error: 'Laporan tidak dalam status boleh edit' });
+    }
+
+    if (!['admin', 'superadmin'].includes(req.tgUser.role) && existing.branch_code !== req.tgUser.branch_code) {
+      return res.status(403).json({ error: 'Laporan ini bukan milik cawangan anda' });
     }
 
     const derived = calcDerived(form);

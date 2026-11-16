@@ -7,6 +7,7 @@ const rateLimit  = require('express-rate-limit');
 
 const reportsRouter  = require('./routes/reports');
 const usersRouter    = require('./routes/users');
+const sessionRouter  = require('./routes/session');
 const authRouter     = require('./routes/auth');
 const webhookRouter  = require('./routes/webhook');
 
@@ -43,6 +44,7 @@ app.use(rateLimit({
 app.use('/api/auth',    authRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/users',   usersRouter);
+app.use('/api/session', sessionRouter);
 
 // Health check
 app.get('/health', (_req, res) => res.json({ status: 'ok', ts: new Date().toISOString() }));
